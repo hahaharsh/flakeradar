@@ -455,41 +455,9 @@ class CustomAIProvider(BaseAIProvider):
 
 ---
 
-## 📞 **Support & Community**
-
-### **Documentation**
-- 📖 **Full Documentation**: [docs.flakeradar.dev](https://docs.flakeradar.dev)
-- 🎥 **Video Tutorials**: [YouTube Channel](https://youtube.com/flakeradar)
-- 📝 **Blog Posts**: [Engineering Best Practices](https://blog.flakeradar.dev)
-
-### **Community**
-- 💬 **Discord Community**: [Join Discussions](https://discord.gg/flakeradar)
-- 🐛 **Issue Tracker**: [GitHub Issues](https://github.com/your-repo/flakeradar/issues)
-- 💡 **Feature Requests**: [GitHub Discussions](https://github.com/your-repo/flakeradar/discussions)
-
-### **Enterprise Support**
-- 📧 **Enterprise Sales**: enterprise@flakeradar.dev
-- 🏢 **Professional Services**: consulting@flakeradar.dev
-- 📞 **24/7 Support**: Available for enterprise customers
-
----
-
-## 📄 **License**
+##  **License**
 
 FlakeRadar is licensed under the MIT License. See [LICENSE](LICENSE) for full details.
-
----
-
-## 🌟 **Testimonials**
-
-> *"FlakeRadar reduced our CI failure rate by 60% in the first month. The AI-powered root cause analysis is incredibly accurate."*  
-> **— Sarah Chen, Senior Engineering Manager @ TechCorp**
-
-> *"The statistical confidence scoring eliminated false flaky alerts. Our team now trusts the tool completely."*  
-> **— Mike Rodriguez, QA Lead @ StartupXYZ**
-
-> *"Time-to-fix tracking helped us identify tests that were wasting 20+ hours per week. ROI was immediate."*  
-> **— Alex Kumar, DevOps Engineer @ Enterprise Inc**
 
 ---
 
@@ -497,7 +465,7 @@ FlakeRadar is licensed under the MIT License. See [LICENSE](LICENSE) for full de
 
 ### **Ready to eliminate flaky tests?**
 
-**[🚀 Get Started Now](https://github.com/your-repo/flakeradar)** • **[📖 Read the Docs](https://docs.flakeradar.dev)** • **[💬 Join Community](https://discord.gg/flakeradar)**
+**[🚀 Get Started Now](https://github.com/hahaharsh7/flakeradar)**
 
 ---
 
