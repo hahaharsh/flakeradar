@@ -1,0 +1,53 @@
+# MANIFEST.in - Controls what gets included in PyPI package
+# This ensures only the source code and necessary files are packaged
+
+# Include essential files
+include README.md
+include ADVANCED_FEATURES.md
+include pyproject.toml
+include src/setup.cfg
+
+# Include source code
+recursive-include src/flakeradar *.py
+recursive-include src/flakeradar/parsers *.py
+
+# Include sample test results for demonstration
+include src/flakeradar/sample_results/*.xml
+
+# Exclude personal data and sensitive files
+exclude *.db
+exclude *.sqlite*
+exclude flakeradar_report*.html
+exclude *.log
+exclude .env*
+exclude config.ini
+exclude secrets.json
+
+# Exclude development files
+exclude .gitignore
+global-exclude __pycache__
+global-exclude *.py[cod]
+global-exclude *~
+global-exclude .DS_Store
+global-exclude *.swp
+global-exclude *.swo
+
+# Exclude test data directories
+prune test_results
+prune test-results
+prune target
+prune junit-reports
+prune TestResults
+prune .tmp
+prune .temp
+prune .flakeradar
+
+# Exclude virtual environment
+prune .venv
+prune venv
+prune ENV
+prune env
+
+# Exclude IDE files
+prune .vscode
+prune .idea

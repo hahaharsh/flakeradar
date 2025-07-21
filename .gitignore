@@ -44,11 +44,39 @@ env/
 ehthumbs.db
 Thumbs.db
 
-# FlakeRadar specific
+# FlakeRadar specific - PRIVACY PROTECTION
 *.db
 *.sqlite
 *.sqlite3
 flakeradar_report.html
+flakeradar_report_*.html
+
+# Personal test data and results
+test_results/
+test-results/
+target/surefire-reports/
+target/failsafe-reports/
+junit-reports/
+test-output/
+TestResults/
+*.xml.bak
+*.xml.backup
+
+# Personal configuration and secrets
+.flakeradar/
+flakeradar.conf
+flakeradar.config
+config.ini
+secrets.json
+api_keys.txt
+
+# Personal logs and temporary files
+flakeradar.log
+*.log.*
+temp_*
+tmp_*
+.tmp/
+.temp/
 
 # Logs
 *.log
