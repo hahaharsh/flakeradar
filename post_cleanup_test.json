@@ -1,0 +1,72 @@
+{
+  "run_id": 67,
+  "project": "PostCleanupTest",
+  "build_id": "api-1753110545",
+  "commit_sha": "unknown",
+  "total_tests": 3,
+  "flaky_tests": 0,
+  "high_confidence_flaky": 0,
+  "confidence_threshold": 0.7,
+  "ai_enabled": false,
+  "ai_analyzed_count": 0,
+  "test_results": [
+    {
+      "pass_count": 0,
+      "fail_count": 1,
+      "total_runs": 1,
+      "transitions": 0,
+      "flake_rate": 1.0,
+      "suspect_flaky": false,
+      "truly_flaky": false,
+      "always_failing": false,
+      "confidence_score": 0.0,
+      "full_name": "com.example.NetworkTests#testApiConnection",
+      "ai": null
+    },
+    {
+      "pass_count": 1,
+      "fail_count": 0,
+      "total_runs": 1,
+      "transitions": 0,
+      "flake_rate": 0.0,
+      "suspect_flaky": false,
+      "truly_flaky": false,
+      "always_failing": false,
+      "confidence_score": 0.0,
+      "full_name": "com.example.BasicTests#testSimpleCalculation",
+      "ai": null
+    },
+    {
+      "pass_count": 1,
+      "fail_count": 0,
+      "total_runs": 1,
+      "transitions": 0,
+      "flake_rate": 0.0,
+      "suspect_flaky": false,
+      "truly_flaky": false,
+      "always_failing": false,
+      "confidence_score": 0.0,
+      "full_name": "com.example.UtilTests#testStringUtils",
+      "ai": null
+    }
+  ],
+  "worst_offenders": [],
+  "cluster_analysis": {
+    "database_connectivity": {
+      "signature": "database_connectivity",
+      "count": 1,
+      "affected_tests": [
+        "com.example.NetworkTests#testApiConnection"
+      ],
+      "error_types": [
+        "TimeoutException"
+      ],
+      "common_keywords": [
+        "connection",
+        "timeout"
+      ],
+      "stack_trace_pattern": "exception_sockettimeoutexception",
+      "severity": "low"
+    }
+  }
+}

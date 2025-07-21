@@ -46,10 +46,36 @@ Thumbs.db
 
 # FlakeRadar specific - PRIVACY PROTECTION
 *.db
+*.db-shm
+*.db-wal
 *.sqlite
 *.sqlite3
 flakeradar_report.html
 flakeradar_report_*.html
+
+# Demo and test files - keep repo clean
+*demo*.py
+*test*.py
+examples.py
+verification*.py
+integration*.py
+
+# Generated reports and metrics
+*.html
+*_report.html
+*_metrics.json
+*metrics.json
+
+# PyPI publishing
+.pypirc
+publish.sh
+dist/
+build/
+
+# Demo data
+demo_*.xml
+test_*.xml
+sample_*.xml
 
 # Personal test data and results
 test_results/
