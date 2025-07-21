@@ -1,0 +1,79 @@
+name: FlakeRadar Analysis
+on: [push, pull_request]
+
+jobs:
+  flake-analysis:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+      
+      - name: Install FlakeRadar
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+      
+      - name: Run Tests (Example - adjust for your test framework)
+        run: |
+          # Add your test commands here
+          # For Maven: mvn test
+          # For Python: pytest --junit-xml=test-results.xml
+          # For now, we'll use the sample results
+          echo "Using sample test results for demonstration"
+        continue-on-error: true
+      
+      - name: Analyze Flakiness
+        run: |
+          flakeradar --project "${{ github.repository }}" \
+                    --results "src/flakeradar/sample_results/*.xml" \
+                    --build "${{ github.run_number }}" \
+                    --commit "${{ github.sha }}"
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      
+      - name: Upload FlakeRadar Report
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: flakeradar-report
+          path: flakeradar_report.html
+          retention-days: 30
+      
+      - name: Comment PR with FlakeRadar Results
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            try {
+              // Check if report exists
+              if (fs.existsSync('flakeradar_report.html')) {
+                const comment = `## 🔍 FlakeRadar Analysis Complete
+                
+                **Test flakiness analysis has been completed for this PR.**
+                
+                📊 **View the detailed report in the workflow artifacts:**
+                - Download the \`flakeradar-report\` artifact from the [workflow run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+                
+                🎯 **Key Features Analyzed:**
+                - Statistical confidence scoring
+                - Time-to-fix analytics  
+                - AI-powered root cause analysis
+                - Priority recommendations
+                
+                > 💡 **Tip:** Set up your \`OPENAI_API_KEY\` secret for enhanced AI analysis!`;
+                
+                github.rest.issues.createComment({
+                  issue_number: context.issue.number,
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  body: comment
+                });
+              }
+            } catch (error) {
+              console.log('Could not create PR comment:', error.message);
+            }
