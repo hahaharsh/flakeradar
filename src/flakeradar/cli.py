@@ -23,7 +23,7 @@ from .root_cause_clustering import cluster_failures_by_root_cause, get_cluster_r
 @click.option("--build", default="local-build", help="Build ID (CI).")
 @click.option("--commit", default="local", help="Git commit SHA.")
 @click.option("--report-out", default="flakeradar_report.html", help="HTML report path.")
-def main(project, results, logs, mode, build, commit, report_out):
+def cli(project, results, logs, mode, build, commit, report_out):
     """
     Analyze test results locally; store in SQLite; emit flakiness summary.
     """
@@ -141,3 +141,12 @@ def main(project, results, logs, mode, build, commit, report_out):
     # Push mode is not implemented yet; we'll add in Iteration 2
     if mode == "push":
         click.echo("WARNING: push mode not implemented yet; local-only summary generated.", err=True)
+
+
+def main():
+    """Legacy entry point for backward compatibility."""
+    cli()
+
+
+if __name__ == "__main__":
+    cli()

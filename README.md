@@ -20,6 +20,8 @@
 
 FlakeRadar is an **intelligent test analysis platform** that transforms raw test results into actionable insights. It combines **statistical analysis**, **AI-powered root cause detection**, and **time-tracking analytics** to help engineering teams eliminate flaky tests and improve CI/CD reliability.
 
+**Available as both a powerful CLI tool and a comprehensive Python API** for seamless integration into your development workflow.
+
 > **"The GitHub Copilot for Test Quality"** - Identify, prioritize, and fix unreliable tests with enterprise-grade analytics.
 
 ### **🔥 Key Problems Solved**
@@ -28,6 +30,8 @@ FlakeRadar is an **intelligent test analysis platform** that transforms raw test
 |---------|-------------------|
 | 🚨 **False Flaky Alerts** | Statistical confidence scoring (Wilson intervals) |
 | ⏱️ **Unknown Fix Priority** | Time-to-fix tracking & productivity impact analysis |
+| 🤖 **Manual Root Cause Analysis** | AI-powered failure clustering & recommendations |
+| 📊 **Limited Integration Options** | **CLI + Python API** for scripts, CI/CD, and automation |
 | 🔍 **Manual Root Cause Analysis** | AI-powered pattern recognition & clustering |
 | 📊 **Lack of Metrics** | Enterprise dashboards with trend analysis |
 | 🎯 **No Actionable Insights** | Specific recommendations per failure type |
@@ -39,18 +43,23 @@ FlakeRadar is an **intelligent test analysis platform** that transforms raw test
 ### **Installation**
 
 ```bash
-# Clone the repository
+# Install from PyPI (recommended)
+pip install flakeradar
+
+# Or clone for development
 git clone https://github.com/your-repo/flakeradar.git
 cd flakeradar
-
-# Install dependencies
 pip install -e .
 
 # Optional: Enable AI analysis (requires OpenAI API key)
 export OPENAI_API_KEY="your-api-key-here"
 ```
 
-### **Basic Usage**
+**FlakeRadar provides both CLI and Python API interfaces:**
+- 🖥️ **CLI Tool**: `flakeradar --project "MyApp" --results "*.xml"`
+- 🐍 **Python API**: `from flakeradar import FlakeRadar`
+
+### **CLI Usage**
 
 ```bash
 # Analyze test results
@@ -59,6 +68,25 @@ flakeradar --project "MyApp" --results "test-results/*.xml"
 # View beautiful HTML report
 open flakeradar_report.html
 ```
+
+### **Python API Usage**
+
+```python
+from flakeradar import FlakeRadar
+
+# Programmatic analysis for scripts and CI/CD
+with FlakeRadar(project="MyApp") as radar:
+    radar.add_results("test-results/*.xml")
+    analysis = radar.analyze(confidence_threshold=0.7, enable_ai=True)
+    radar.generate_html_report("report.html")
+```
+
+#### **📚 Quick Navigation**
+- 🚀 **[Python API Documentation](#python-api)** - Comprehensive parameter guide & examples
+- 🎛️ **[Configuration Parameters](#configuration-parameters)** - Detailed settings explanation
+- 🎯 **[Usage Patterns](#configuration-patterns)** - Development, CI/CD, Production configs
+- 📊 **[Enterprise Features](#enterprise-features)** - Statistical analysis & AI insights
+- 🔧 **[CI/CD Integration](#github-actions-workflow)** - Automated quality gates
 
 ### **Sample Output**
 
@@ -352,6 +380,10 @@ Options:
 
 ### **Python API**
 
+FlakeRadar provides a comprehensive Python API for programmatic test analysis and integration into your automation workflows.
+
+#### **🚀 Quick Start**
+
 ```python
 from flakeradar import FlakeRadar
 
@@ -361,16 +393,178 @@ radar = FlakeRadar(project="MyApp")
 # Add test results
 radar.add_results("test-results/*.xml")
 
-# Analyze flakiness
+# Analyze flakiness with configuration
 analysis = radar.analyze(
-    confidence_threshold=0.7,
-    enable_ai=True,
-    track_time_to_fix=True
+    confidence_threshold=0.7,    # Statistical confidence (0.0-1.0)
+    enable_ai=True,              # AI-powered analysis
+    track_time_to_fix=True,      # Time-tracking analytics
+    limit_runs=50,               # Historical runs to analyze
+    max_ai_analysis=20           # Max tests for AI analysis
 )
 
 # Generate reports
 radar.generate_html_report("report.html")
 radar.export_metrics("metrics.json")
+```
+
+#### **🎛️ Configuration Parameters**
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `confidence_threshold` | `float` | `0.7` | Minimum statistical confidence for flaky classification (0.0-1.0) |
+| `enable_ai` | `bool/None` | `None` | Enable AI analysis (`True`/`False`/`None` for auto-detect) |
+| `track_time_to_fix` | `bool` | `True` | Track how long tests have been flaky |
+| `limit_runs` | `int` | `50` | Number of recent test runs to include in analysis |
+| `max_ai_analysis` | `int` | `20` | Maximum number of tests to analyze with AI |
+
+#### **📊 Parameter Impact**
+
+**confidence_threshold**:
+- `0.9`: Conservative - only very confident flaky tests (production)
+- `0.7`: Balanced - good mix of precision and recall (recommended)
+- `0.5`: Sensitive - catch potentially flaky tests early (development)
+
+**enable_ai**:
+- `True`: Detailed failure insights using OpenAI GPT (requires API key)
+- `False`: Faster analysis without AI costs
+- `None`: Auto-detect based on `OPENAI_API_KEY` environment variable
+
+**track_time_to_fix**:
+- `True`: Enables "worst offender" tracking and trend analysis
+- `False`: Faster analysis without historical tracking
+
+#### **🎯 Configuration Patterns**
+
+**Development Environment (Fast Feedback)**:
+```python
+analysis = radar.analyze(
+    confidence_threshold=0.6,    # Catch issues early
+    enable_ai=False,             # Speed over insights
+    track_time_to_fix=False,     # Not needed in dev
+    limit_runs=20,               # Quick analysis
+    max_ai_analysis=0            # No AI costs
+)
+```
+
+**CI/CD Pipeline (Balanced)**:
+```python
+analysis = radar.analyze(
+    confidence_threshold=0.7,    # Balanced accuracy
+    enable_ai=True,              # Useful insights
+    track_time_to_fix=True,      # Track technical debt
+    limit_runs=50,               # Good historical context
+    max_ai_analysis=15           # Controlled AI costs
+)
+```
+
+**Production Monitoring (Comprehensive)**:
+```python
+analysis = radar.analyze(
+    confidence_threshold=0.8,    # High confidence required
+    enable_ai=True,              # Full AI insights
+    track_time_to_fix=True,      # Essential for monitoring
+    limit_runs=100,              # Deep historical analysis
+    max_ai_analysis=30           # Comprehensive AI analysis
+)
+```
+
+#### **🔄 Context Manager Support**
+
+```python
+# Automatic cleanup with context manager
+with FlakeRadar(project="MyApp", db_path="custom.db") as radar:
+    radar.add_results("test-results/*.xml")
+    analysis = radar.analyze()
+    radar.generate_html_report("report.html")
+# Database connection automatically closed
+```
+
+#### **📈 Advanced Usage**
+
+**Batch Processing**:
+```python
+projects = ["Frontend", "Backend", "API"]
+results = {}
+
+for project in projects:
+    with FlakeRadar(project=project) as radar:
+        radar.add_results(f"{project.lower()}/test-results/*.xml")
+        analysis = radar.analyze()
+        results[project] = radar.get_summary()
+        radar.generate_html_report(f"{project.lower()}_report.html")
+```
+
+**CI/CD Integration with Quality Gates**:
+```python
+import os
+from flakeradar import FlakeRadar
+
+# Use environment variables for CI/CD context
+project = os.environ.get("CI_PROJECT_NAME", "Unknown")
+build_id = os.environ.get("CI_BUILD_ID", "local")
+commit = os.environ.get("CI_COMMIT_SHA", "unknown")
+
+with FlakeRadar(project=project, build_id=build_id, commit_sha=commit) as radar:
+    radar.add_results("test-results/*.xml")
+    analysis = radar.analyze(confidence_threshold=0.7)
+    
+    # Generate artifacts for CI/CD
+    radar.generate_html_report("flakeradar_report.html")
+    radar.export_metrics("flakeradar_metrics.json")
+    
+    # Quality gate: fail build if too many flaky tests
+    summary = radar.get_summary()
+    if summary["flakiness_rate"] > 10.0:  # 10% threshold
+        print(f"❌ Build failed: {summary['flakiness_rate']:.1f}% flakiness rate")
+        exit(1)
+    else:
+        print(f"✅ Build passed: {summary['flakiness_rate']:.1f}% flakiness rate")
+```
+
+**Error Handling**:
+```python
+try:
+    radar = FlakeRadar(project="MyApp")
+    radar.add_results("test-results/*.xml")
+    analysis = radar.analyze()
+except FileNotFoundError:
+    print("No test result files found")
+except ValueError as e:
+    print(f"Analysis error: {e}")
+finally:
+    radar.close()
+```
+
+#### **📊 Analysis Results**
+
+The `analyze()` method returns a comprehensive dictionary:
+
+```python
+{
+    "total_tests": 17,                    # Total tests analyzed
+    "flaky_tests": 3,                     # Tests classified as flaky
+    "high_confidence_flaky": 2,           # High-confidence flaky tests
+    "confidence_threshold": 0.7,          # Threshold used
+    "ai_enabled": True,                   # Whether AI was used
+    "ai_analyzed_count": 15,              # Tests analyzed by AI
+    "test_results": [...],                # Detailed per-test results
+    "worst_offenders": [...],             # Longest-flaky tests
+    "cluster_analysis": {...}             # Root cause clustering
+}
+```
+
+#### **🔧 Additional Methods**
+
+```python
+# Get summary statistics
+summary = radar.get_summary()
+# Returns: project, total_tests, flaky_tests, flakiness_rate, etc.
+
+# Get high-confidence flaky tests
+flaky_tests = radar.get_flaky_tests(confidence_threshold=0.8)
+
+# Publish results to external systems
+radar.publish_results()  # Redis/Kafka integration
 ```
 
 ---

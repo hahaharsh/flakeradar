@@ -44,8 +44,10 @@ CREATE INDEX IF NOT EXISTS idx_flaky_tracking_status ON flaky_test_tracking(fixe
 """
 
 def get_conn(db_path: str = DEFAULT_DB) -> sqlite3.Connection:
-    # Ensure the directory exists
-    os.makedirs(os.path.dirname(db_path), exist_ok=True)
+    # Ensure the directory exists (only if it's not current directory)
+    db_dir = os.path.dirname(db_path)
+    if db_dir:  # Only create directory if it's not empty (not current dir)
+        os.makedirs(db_dir, exist_ok=True)
     conn = sqlite3.connect(db_path)
     conn.execute("PRAGMA journal_mode=WAL;")
     return conn
