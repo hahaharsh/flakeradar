@@ -4,13 +4,13 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "flakeradar"
-version = "1.1.0"
-description = "AI-Powered Test Flakiness Detection & Root Cause Analysis - Enterprise-grade analytics for test reliability"
+version = "1.2.0"
+description = "AI-Powered Test Flakiness Detection & Team Collaboration - Enterprise-grade analytics with cross-environment insights"
 authors = [{name="Harsh", email="geemax.harsh@gmail.com"}]
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.9"
-keywords = ["testing", "flaky-tests", "ci-cd", "test-analytics", "ai", "quality-assurance"]
+keywords = ["testing", "flaky-tests", "ci-cd", "test-analytics", "ai", "team-collaboration", "cross-environment", "enterprise", "quality-assurance"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
@@ -34,7 +34,8 @@ dependencies = [
   "kafka-python>=2.0",      # lightweight; swap for confluent-kafka later
   "sqlalchemy>=2.0",
   "alembic>=1.13",
-  "pydantic>=2.7"
+  "pydantic>=2.7",
+  "flask>=3.0"              # local development server
 ]
 
 [project.urls]

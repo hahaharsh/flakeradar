@@ -2,6 +2,7 @@
 FlakeRadar Python API
 
 Provides a programmatic interface to FlakeRadar's test analysis capabilities.
+Enhanced with team collaboration features.
 """
 
 from __future__ import annotations
@@ -12,7 +13,9 @@ import time
 from typing import Dict, List, Optional, Any
 from pathlib import Path
 
-from .config import config_from_cli
+from .config import Config, TeamConfig, FlakeRadarTier
+from .team_backend import TeamBackend
+from .team_analyzer import TeamAnalyzer, compute_flakiness
 from .parsers.detect import detect_format
 from .parsers.junit import parse_junit_xml
 from .history import (
@@ -23,7 +26,6 @@ from .history import (
     update_flaky_test_tracking, 
     get_worst_flaky_offenders
 )
-from .analyzer import compute_flakiness
 from .summarize import summarize_failure
 from .html_report import render_report
 from .send_redis import publish_to_redis
@@ -34,6 +36,7 @@ from .root_cause_clustering import cluster_failures_by_root_cause, get_cluster_r
 class FlakeRadar:
     """
     FlakeRadar Python API for programmatic test analysis.
+    Enhanced with team collaboration features.
     
     Example:
         >>> from flakeradar import FlakeRadar
@@ -41,13 +44,23 @@ class FlakeRadar:
         >>> radar.add_results("test-results/*.xml")
         >>> analysis = radar.analyze()
         >>> radar.generate_html_report("report.html")
+        
+    Team Mode Example:
+        >>> import os
+        >>> os.environ["FLAKERADAR_TOKEN"] = "your-team-token"
+        >>> os.environ["FLAKERADAR_TEAM_ID"] = "your-team-id"
+        >>> radar = FlakeRadar(project="MyApp", environment="staging")
+        >>> analysis = radar.analyze()  # Includes team insights
     """
     
     def __init__(self, 
                  project: str,
                  db_path: Optional[str] = None,
                  build_id: Optional[str] = None,
-                 commit_sha: Optional[str] = None):
+                 commit_sha: Optional[str] = None,
+                 environment: Optional[str] = None,
+                 team_id: Optional[str] = None,
+                 api_token: Optional[str] = None):
         """
         Initialize FlakeRadar analyzer.
         
@@ -56,6 +69,9 @@ class FlakeRadar:
             db_path: Path to SQLite database (defaults to ~/.flakeradar/history.db)
             build_id: Build identifier (defaults to timestamp)
             commit_sha: Git commit SHA (defaults to "unknown")
+            environment: Environment name for team features (e.g., "staging", "prod")
+            team_id: Team identifier for team features
+            api_token: FlakeRadar team API token (can also use FLAKERADAR_TOKEN env var)
         """
         self.project = project
         
@@ -66,6 +82,27 @@ class FlakeRadar:
         
         self.build_id = build_id or f"api-{int(time.time())}"
         self.commit_sha = commit_sha or "unknown"
+        
+        # Setup team configuration
+        team_config = TeamConfig.from_env()
+        if environment:
+            team_config.environment = environment
+        if team_id:
+            team_config.team_id = team_id
+        if api_token:
+            team_config.api_token = api_token
+        
+        # Create config object
+        self.config = Config(
+            project=project,
+            build_id=self.build_id,
+            commit_sha=self.commit_sha,
+            db_path=self.db_path,
+            team_config=team_config
+        )
+        
+        # Initialize team analyzer
+        self.team_analyzer = TeamAnalyzer(self.config)
         
         # Ensure the directory exists (only if it's not current directory)
         db_dir = os.path.dirname(self.db_path)
@@ -81,6 +118,7 @@ class FlakeRadar:
         self.analysis_data = None
         self.worst_offenders = []
         self.cluster_analysis = {}
+        self.team_insights = None
         
     def add_results(self, results_glob: str) -> int:
         """
@@ -145,7 +183,7 @@ class FlakeRadar:
             max_ai_analysis: Maximum number of tests to analyze with AI
             
         Returns:
-            Dictionary containing analysis results
+            Dictionary containing analysis results with team insights (if available)
             
         Raises:
             ValueError: If parameters are invalid
@@ -169,13 +207,13 @@ class FlakeRadar:
             project=self.project,
             build_id=self.build_id,
             commit_sha=self.commit_sha,
-            meta={"mode": "api", "total_tests": len(self.all_results)},
+            meta={"mode": "api", "total_tests": len(self.all_results), "tier": self.config.tier.value},
             results=self.all_results,
         )
         
-        # Compute flakiness across history
+        # Compute flakiness across history (enhanced with team context)
         raw_rows = fetch_recent_tests(self.conn, self.project, limit_runs=limit_runs)
-        flake_stats = compute_flakiness(raw_rows)
+        flake_stats = self.team_analyzer.compute_flakiness_with_team_context(raw_rows)
         
         # Apply confidence threshold filter
         filtered_stats = {
@@ -191,6 +229,10 @@ class FlakeRadar:
         
         # Root cause clustering analysis
         self.cluster_analysis = cluster_failures_by_root_cause(self.all_results)
+        
+        # Get team insights if available
+        if self.config.tier != FlakeRadarTier.FREE:
+            self.team_insights = self.team_analyzer.get_team_dashboard_data()
         
         # AI analysis (if enabled)
         ai_cache = {}
@@ -231,16 +273,35 @@ class FlakeRadar:
             "project": self.project,
             "build_id": self.build_id,
             "commit_sha": self.commit_sha,
+            "environment": self.config.team_config.environment,
+            "tier": self.config.tier.value,
             "total_tests": len(self.all_results),
             "flaky_tests": len([r for r in test_rows if r["suspect_flaky"]]),
             "high_confidence_flaky": len(filtered_stats),
             "confidence_threshold": confidence_threshold,
             "ai_enabled": enable_ai,
             "ai_analyzed_count": len(ai_cache),
+            "track_time_to_fix": track_time_to_fix,
             "test_results": test_rows,
             "worst_offenders": self.worst_offenders,
             "cluster_analysis": self.cluster_analysis,
+            "team_insights": self.team_insights,
         }
+        
+        # Submit to team backend (if enabled)
+        if self.config.tier != FlakeRadarTier.FREE:
+            try:
+                submitted = self.team_analyzer.submit_analysis_to_team(self.analysis_data)
+                self.analysis_data["team_submitted"] = submitted
+                if submitted:
+                    print(f"📤 Analysis submitted to team backend")
+                else:
+                    print(f"⚠️  Team submission failed (continuing locally)")
+            except Exception as e:
+                print(f"⚠️  Team submission error: {e}")
+                self.analysis_data["team_submitted"] = False
+        else:
+            self.analysis_data["team_submitted"] = False
         
         return self.analysis_data
     
@@ -385,6 +446,76 @@ class FlakeRadar:
             send_kafka_event(self.project, summary_payload)
         except Exception:
             pass  # Non-blocking
+    
+    def get_team_dashboard(self, project: str = None) -> Optional[Dict[str, Any]]:
+        """
+        Get centralized team dashboard data that all team members can access
+        
+        Args:
+            project: Optional project to filter dashboard (defaults to current project)
+            
+        Returns:
+            Dashboard data with team collaboration metrics, or None if not in team mode
+        """
+        return self.team_analyzer.get_central_dashboard(project or self.project)
+    
+    def get_team_members(self) -> List[Dict[str, Any]]:
+        """
+        Get list of active team members who have contributed test data
+        
+        Returns:
+            List of team member information (empty if not in team mode)
+        """
+        return self.team_analyzer.get_team_members()
+    
+    def get_team_activity(self, limit: int = 20) -> List[Dict[str, Any]]:
+        """
+        Get real-time activity feed of team test runs
+        
+        Args:
+            limit: Maximum number of recent activities to fetch
+            
+        Returns:
+            List of recent team activities (empty if not in team mode)
+        """
+        return self.team_analyzer.get_real_time_activity(limit)
+    
+    def get_dashboard_url(self, project: str = None) -> Optional[str]:
+        """
+        Get URL to the centralized team dashboard where all team members can view results
+        
+        Args:
+            project: Optional project for dashboard filtering
+            
+        Returns:
+            Dashboard URL or None if not in team mode
+        """
+        return self.team_analyzer.get_dashboard_url(project or self.project)
+    
+    def notify_team_completion(self) -> bool:
+        """
+        Notify team members that analysis is complete and results are available in dashboard
+        
+        Returns:
+            True if notification sent successfully, False if not in team mode or failed
+        """
+        if not self.analysis_data:
+            raise ValueError("No analysis data available. Call analyze() first.")
+        
+        run_summary = {
+            "contributor": os.getenv("USER", "api-user"),
+            "project": self.project,
+            "environment": self.config.team_config.environment,
+            "total_tests": self.analysis_data["total_tests"],
+            "flaky_tests": self.analysis_data["flaky_tests"],
+            "build_id": self.build_id,
+            "commit_sha": self.commit_sha,
+            "completion_time": time.time(),
+            "dashboard_update": True,
+            "source": "python-api"
+        }
+        
+        return self.team_analyzer.notify_team_of_completion(run_summary)
     
     def close(self) -> None:
         """Close database connection."""

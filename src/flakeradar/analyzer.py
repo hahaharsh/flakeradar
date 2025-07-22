@@ -64,12 +64,11 @@ def calculate_flakiness_confidence(pass_count: int, fail_count: int, total: int,
     transition_rate = transitions / max(1, total - 1)
     transition_factor = min(1.0, transition_rate * 2)  # 50%+ transition rate = high confidence
     
-    # Penalize edge cases (all pass or all fail with few runs)
+    # Handle edge cases: consistent behavior = NOT flaky
     if pass_count == 0 or fail_count == 0:
-        if total < 5:
-            return 0.3  # low confidence for edge cases with few runs
-        else:
-            return 0.8  # high confidence for consistent behavior with many runs
+        # All pass or all fail = definitely NOT flaky
+        # High confidence that it's NOT flaky = low flakiness confidence score
+        return 0.0
     
     # For mixed results, use binomial confidence interval
     p = fail_count / total
